@@ -404,8 +404,8 @@ class EdgeConnect():
             return
 
         #self.edge_model.eval()
-        # self.inpaint_model.eval()
-        self.inpaint_model1.eval()
+        self.inpaint_model.eval()
+        #self.inpaint_model1.eval()
 
         model = self.config.MODEL
         items = next(self.sample_iterator)
