@@ -12,6 +12,7 @@ from image_synthesis.modeling.utils.misc import distributed_sinkhorn, get_token_
 from image_synthesis.distributed.distributed import all_reduce, get_world_size
 from image_synthesis.modeling.modules.edge_connect.losses import EdgeConnectLoss
 from image_synthesis.modeling.utils.position_encoding import build_position_encoding
+from src.partialconv2d import PConvBNActiv
 
 
 
@@ -223,64 +224,95 @@ class InpaintGenerator(BaseNetwork):
 
 
 class InpaintGenerator1(BaseNetwork):
-    def __init__(self, residual_blocks=8, use_spectral_norm=True,init_weights=True):
-        super(InpaintGenerator1, self).__init__()
+    # def __init__(self, residual_blocks=8, use_spectral_norm=True,init_weights=True):
+    #     super(InpaintGenerator1, self).__init__()
+    #
+    #     self.encoder = nn.Sequential(
+    #         nn.ReflectionPad2d(3),
+    #         spectral_norm(nn.Conv2d(in_channels=4, out_channels=64, kernel_size=7, padding=0), use_spectral_norm),
+    #         nn.InstanceNorm2d(64, track_running_stats=False),
+    #         nn.ReLU(True),
+    #
+    #         spectral_norm(nn.Conv2d(in_channels=64, out_channels=128, kernel_size=4, stride=2, padding=1),
+    #                       use_spectral_norm),
+    #         nn.InstanceNorm2d(128, track_running_stats=False),
+    #         nn.ReLU(True),
+    #
+    #         spectral_norm(nn.Conv2d(in_channels=128, out_channels=256, kernel_size=4, stride=2, padding=1),
+    #                       use_spectral_norm),
+    #         nn.InstanceNorm2d(256, track_running_stats=False),
+    #         nn.ReLU(True),
+    #
+    #         spectral_norm(nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=2, padding=1),
+    #                       use_spectral_norm),
+    #         nn.InstanceNorm2d(512, track_running_stats=False),
+    #         nn.ReLU(True)
+    #
+    #     )
+    #
+    #     blocks1 = []
+    #     for _ in range(4):
+    #         block = ResnetBlock(512, 2, use_spectral_norm=use_spectral_norm)
+    #         blocks1.append(block)
+    #
+    #     self.middle1 = nn.Sequential(*blocks1)
+    #     blocks2 = []
+    #     for _ in range(4):
+    #         block = ResnetBlock(512, 2, use_spectral_norm=use_spectral_norm)
+    #         blocks2.append(block)
+    #
+    #     self.middle2 = nn.Sequential(*blocks2)
+    #     self.quantize = VectorQuantizer(n_e=1024, e_dim=512)
+    #     self.decoder = nn.Sequential(
+    #
+    #         spectral_norm(nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4, stride=2, padding=1),
+    #                       use_spectral_norm),
+    #         nn.InstanceNorm2d(256, track_running_stats=False),
+    #         nn.ReLU(True),
+    #
+    #         spectral_norm(nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4, stride=2, padding=1),
+    #                       use_spectral_norm),
+    #         nn.InstanceNorm2d(128, track_running_stats=False),
+    #         nn.ReLU(True),
+    #
+    #         spectral_norm(nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1),
+    #                       use_spectral_norm),
+    #         nn.InstanceNorm2d(64, track_running_stats=False),
+    #         nn.ReLU(True),
+    #
+    #         nn.ReflectionPad2d(3),
+    #         nn.Conv2d(in_channels=64, out_channels=3, kernel_size=7, padding=0)
+    #     )
+    def __init__(self, image_in_channels=4, out_channels=4, init_weights=True):
+        super(InpaintGenerator, self).__init__()
 
-        self.encoder = nn.Sequential(
-            nn.ReflectionPad2d(3),
-            spectral_norm(nn.Conv2d(in_channels=4, out_channels=64, kernel_size=7, padding=0), use_spectral_norm),
-            nn.InstanceNorm2d(64, track_running_stats=False),
-            nn.ReLU(True),
+        self.freeze_ec_bn = False
+        # self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
-            spectral_norm(nn.Conv2d(in_channels=64, out_channels=128, kernel_size=4, stride=2, padding=1),
-                          use_spectral_norm),
-            nn.InstanceNorm2d(128, track_running_stats=False),
-            nn.ReLU(True),
+        # -----------------------
+        # small encoder-decoder
+        # -----------------------
+        self.ec_texture_1 = PConvBNActiv(image_in_channels, 64, bn=False, sample='down-7')
+        self.ec_texture_2 = PConvBNActiv(64, 128, sample='down-5', )
+        self.ec_texture_3 = PConvBNActiv(128, 256, sample='down-5')
+        self.ec_texture_4 = PConvBNActiv(256, 512, sample='down-3')
 
-            spectral_norm(nn.Conv2d(in_channels=128, out_channels=256, kernel_size=4, stride=2, padding=1),
-                          use_spectral_norm),
-            nn.InstanceNorm2d(256, track_running_stats=False),
-            nn.ReLU(True),
+        self.dc_texture_4 = PConvBNActiv(512 + 256, 256, activ='leaky')
+        self.dc_texture_3 = PConvBNActiv(256 + 128, 128, activ='leaky')
+        self.dc_texture_2 = PConvBNActiv(128 + 64, 64, activ='leaky')
+        self.dc_texture_1 = PConvBNActiv(64 + out_channels, 64, activ='leaky')
 
-            spectral_norm(nn.Conv2d(in_channels=256, out_channels=512, kernel_size=4, stride=2, padding=1),
-                          use_spectral_norm),
-            nn.InstanceNorm2d(512, track_running_stats=False),
-            nn.ReLU(True)
-
+        self.fusion_layer1 = nn.Sequential(
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(negative_slope=0.2)
         )
-
-        blocks1 = []
-        for _ in range(4):
-            block = ResnetBlock(512, 2, use_spectral_norm=use_spectral_norm)
-            blocks1.append(block)
-
-        self.middle1 = nn.Sequential(*blocks1)
-        blocks2 = []
-        for _ in range(4):
-            block = ResnetBlock(512, 2, use_spectral_norm=use_spectral_norm)
-            blocks2.append(block)
-
-        self.middle2 = nn.Sequential(*blocks2)
-        self.quantize = VectorQuantizer(n_e=1024, e_dim=512)
-        self.decoder = nn.Sequential(
-
-            spectral_norm(nn.ConvTranspose2d(in_channels=512, out_channels=256, kernel_size=4, stride=2, padding=1),
-                          use_spectral_norm),
-            nn.InstanceNorm2d(256, track_running_stats=False),
-            nn.ReLU(True),
-
-            spectral_norm(nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=4, stride=2, padding=1),
-                          use_spectral_norm),
-            nn.InstanceNorm2d(128, track_running_stats=False),
-            nn.ReLU(True),
-
-            spectral_norm(nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1),
-                          use_spectral_norm),
-            nn.InstanceNorm2d(64, track_running_stats=False),
-            nn.ReLU(True),
-
-            nn.ReflectionPad2d(3),
-            nn.Conv2d(in_channels=64, out_channels=3, kernel_size=7, padding=0)
+        self.fusion_layer2 = nn.Sequential(
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+            nn.LeakyReLU(negative_slope=0.2),
+        )
+        self.out_layer = nn.Sequential(
+            nn.Conv2d(64, 3, kernel_size=1),
+            nn.Tanh()
         )
 
         if init_weights:
@@ -295,23 +327,23 @@ class InpaintGenerator1(BaseNetwork):
 
 
 
-    def forward(self, images_masked):
-        x = images_masked
-        x = self.encoder(x)
-        x = self.middle1(x)
-        b, c, h, w = x.shape
-        tgt = x.reshape(b, c, h * w).permute(2, 0, 1).contiguous()
-        # # #print(tgt.shape) [1024,12,512]
-        mem = self.kv.unsqueeze(dim=1).repeat(1, x.shape[0], 1).to(tgt.device)
-        attn_out, _ = self.attn(tgt, mem, tgt
-                                    )
-        attn_out = attn_out.permute(1, 2, 0).reshape(x.shape)
-        x = x + attn_out
-        x = self.middle2(x)
-        x = self.decoder(x)
-        x = (torch.tanh(x) + 1) / 2
-        #x = torch.sigmoid(x) #edge
-        return x #, emb_loss
+    def forward(self, images_masked,masks):
+        # x = images_masked
+        # x = self.encoder(x)
+        # x = self.middle1(x)
+        # b, c, h, w = x.shape
+        # tgt = x.reshape(b, c, h * w).permute(2, 0, 1).contiguous()
+        # # # #print(tgt.shape) [1024,12,512]
+        # mem = self.kv.unsqueeze(dim=1).repeat(1, x.shape[0], 1).to(tgt.device)
+        # attn_out, _ = self.attn(tgt, mem, tgt
+        #                             )
+        # attn_out = attn_out.permute(1, 2, 0).reshape(x.shape)
+        # x = x + attn_out
+        # x = self.middle2(x)
+        # x = self.decoder(x)
+        # x = (torch.tanh(x) + 1) / 2
+        # #x = torch.sigmoid(x) #edge
+        # return x #, emb_loss
 
 
     #     self.encoder = nn.Sequential(
@@ -359,6 +391,51 @@ class InpaintGenerator1(BaseNetwork):
     #     x = (torch.tanh(x) + 1) / 2
     #
     #     return x
+
+        ec_textures = {}
+        input_image = images_masked
+
+        input_texture_mask = torch.cat((masks, masks, masks, masks), dim=1)
+            # print('116',input_texture_mask.shape)#[8,4,256,256]
+
+        ec_textures['ec_t_0'], ec_textures['ec_t_masks_0'] = input_image, input_texture_mask
+            # print('t00', ec_textures['ec_t_0'].shape)  # [2,4,256,256]
+            # print('t00', ec_textures['ec_t_masks_0'].shape)  # [2,4,256,256]
+        ec_textures['ec_t_1'], ec_textures['ec_t_masks_1'] = self.ec_texture_1(ec_textures['ec_t_0'],
+                                                                                   ec_textures['ec_t_masks_0'])
+            # print('t11', ec_textures['ec_t_1'].shape)#[2,64,128,128]
+            # print('t11', ec_textures['ec_t_masks_1'].shape)#[2,64,128,128]
+        ec_textures['ec_t_2'], ec_textures['ec_t_masks_2'] = self.ec_texture_2(ec_textures['ec_t_1'],
+                                                                                   ec_textures['ec_t_masks_1'])
+            # print('t22', ec_textures['ec_t_2'].shape)#[2,128,64,64]
+            # print('t22', ec_textures['ec_t_masks_2'].shape)#[2,128,64,64]
+        ec_textures['ec_t_3'], ec_textures['ec_t_masks_3'] = self.ec_texture_3(ec_textures['ec_t_2'],
+                                                                                   ec_textures['ec_t_masks_2'])
+            #print('t33', ec_textures['ec_t_3'].shape)#[2,256,32,32]
+            #print('t33', ec_textures['ec_t_masks_3'].shape)#[2,256,32,32]
+        for _ in range(4, 0, -1):
+            ec_texture_skip = 'ec_t_{:d}'.format(_ - 1)  # ec_t_6
+            ec_texture_masks_skip = 'ec_t_masks_{:d}'.format(_ - 1)  # ec_t_masks_6
+            dc_conv = 'dc_texture_{:d}'.format(_)  # dc_texture_7
+
+            dc_texture = F.interpolate(dc_texture, scale_factor=2, mode='bilinear')  # dc_texture 4x4
+            dc_tecture_mask = F.interpolate(dc_tecture_mask, scale_factor=2, mode='nearest')  # dc_tecture_mask 4x4
+            #print('!!!',dc_texture.shape)
+
+            #print(ec_textures[ec_texture_skip].shape)
+            dc_texture = torch.cat((dc_texture, ec_textures[ec_texture_skip]), dim=1)  # dc_texture 4x4 ec_textures['ec_t_6'] 4x4
+           # print('186',dc_texture.shape)
+            dc_tecture_mask = torch.cat((dc_tecture_mask, ec_textures[ec_texture_masks_skip]),
+                                        dim=1)  # dc_tecture_mask 4x4 ec_textures['ec_t_masks_6'] 4x4
+
+            dc_texture, dc_tecture_mask = getattr(self, dc_conv)(dc_texture,dc_tecture_mask)
+
+        output1 = dc_texture
+        output2 = self.fusion_layer1(output1)
+        output3 = self.fusion_layer2(output2)
+        output4 = self.out_layer(output3)
+
+        return output4
 
 
 class EdgeGenerator(BaseNetwork):
