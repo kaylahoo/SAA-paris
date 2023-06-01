@@ -284,7 +284,7 @@ class InpaintGenerator1(BaseNetwork):
     #         nn.Conv2d(in_channels=64, out_channels=3, kernel_size=7, padding=0)
     #     )
     def __init__(self, image_in_channels=4, out_channels=4, init_weights=True):
-        super(InpaintGenerator, self).__init__()
+        super(InpaintGenerator1, self).__init__()
 
         self.freeze_ec_bn = False
         # self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
