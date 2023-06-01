@@ -92,7 +92,7 @@ class PConvBNActiv(nn.Module):
 
             self.small_res = self.res_block(in_channels, out_channels, is_large_small='small')
 
-            self.conv = PartialConv2d(in_channels, out_channels, kernel_size=7, stride=2, padding=3, bias=bias,
+            self.conv = PartialConv2d(out_channels, out_channels, kernel_size=7, stride=2, padding=3, bias=bias,
                                       multi_channel=True)
 
             self.se_res = SELayer(out_channels, 16)
@@ -104,7 +104,7 @@ class PConvBNActiv(nn.Module):
 
             self.small_res = self.res_block(in_channels, out_channels, is_large_small='small')
 
-            self.conv = PartialConv2d(in_channels, out_channels, kernel_size=5, stride=2, padding=2, bias=bias,
+            self.conv = PartialConv2d(out_channels, out_channels, kernel_size=5, stride=2, padding=2, bias=bias,
                                      multi_channel=True)
             self.se_res = SELayer(out_channels, 16)
             self.se_dconv = SELayer(out_channels, 16)
@@ -115,7 +115,7 @@ class PConvBNActiv(nn.Module):
 
             self.small_res = self.res_block(in_channels, out_channels, is_large_small='small')
 
-            self.conv = PartialConv2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1, bias=bias,
+            self.conv = PartialConv2d(out_channels, out_channels, kernel_size=3, stride=2, padding=1, bias=bias,
                                       multi_channel=True)
             self.se_res = SELayer(out_channels, 16)
             self.se_dconv = SELayer(out_channels, 16)
