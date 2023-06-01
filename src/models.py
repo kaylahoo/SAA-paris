@@ -377,7 +377,7 @@ class InpaintingModel1(BaseModel):
         # return outputs
         images_masked = images * masks.float()
         inputs = torch.cat((images_masked, masks), dim=1)  # in: [rgb(3) + masks(1)]v
-        outputs = self.generator(inputs)  # in: [grayscale(1) + edge(1) + mask(1)]
+        outputs = self.generator(inputs,masks)  # in: [grayscale(1) + edge(1) + mask(1)]
         return outputs
 
     def backward(self, gen_loss=None, dis_loss=None):
