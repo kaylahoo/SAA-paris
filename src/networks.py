@@ -296,7 +296,13 @@ class InpaintGenerator1(BaseNetwork):
         self.ec_texture_2 = PConvBNActiv(64, 128, sample='down-5', )
         self.ec_texture_3 = PConvBNActiv(128, 256, sample='down-5')
         self.ec_texture_4 = PConvBNActiv(256, 512, sample='down-3')
+        self.ec_texture_5 = PConvBNActiv(512, 512, sample='down-3')
+        self.ec_texture_6 = PConvBNActiv(512, 512, sample='down-3')
+        self.ec_texture_7 = PConvBNActiv(512, 512, sample='down-3')
 
+        self.dc_texture_7 = PConvBNActiv(512 + 512, 512, activ='leaky')
+        self.dc_texture_6 = PConvBNActiv(512 + 512, 512, activ='leaky')
+        self.dc_texture_5 = PConvBNActiv(512 + 512, 512, activ='leaky')
         self.dc_texture_4 = PConvBNActiv(512 + 256, 256, activ='leaky')
         self.dc_texture_3 = PConvBNActiv(256 + 128, 128, activ='leaky')
         self.dc_texture_2 = PConvBNActiv(128 + 64, 64, activ='leaky')
@@ -393,28 +399,47 @@ class InpaintGenerator1(BaseNetwork):
     #     return x
 
         ec_textures = {}
+        ec_structures = {}
         input_image = images_masked
 
         input_texture_mask = torch.cat((masks, masks, masks, masks), dim=1)
-            # print('116',input_texture_mask.shape)#[8,4,256,256]
+        # print('116',input_texture_mask.shape)#[8,4,256,256]
 
         ec_textures['ec_t_0'], ec_textures['ec_t_masks_0'] = input_image, input_texture_mask
-            # print('t00', ec_textures['ec_t_0'].shape)  # [2,4,256,256]
-            # print('t00', ec_textures['ec_t_masks_0'].shape)  # [2,4,256,256]
+        # print('t00', ec_textures['ec_t_0'].shape)  # [2,4,256,256]
+        # print('t00', ec_textures['ec_t_masks_0'].shape)  # [2,4,256,256]
         ec_textures['ec_t_1'], ec_textures['ec_t_masks_1'] = self.ec_texture_1(ec_textures['ec_t_0'],
-                                                                                   ec_textures['ec_t_masks_0'])
-            # print('t11', ec_textures['ec_t_1'].shape)#[2,64,128,128]
-            # print('t11', ec_textures['ec_t_masks_1'].shape)#[2,64,128,128]
+                                                                               ec_textures['ec_t_masks_0'])
+        # print('t11', ec_textures['ec_t_1'].shape)#[2,64,128,128]
+        # print('t11', ec_textures['ec_t_masks_1'].shape)#[2,64,128,128]
         ec_textures['ec_t_2'], ec_textures['ec_t_masks_2'] = self.ec_texture_2(ec_textures['ec_t_1'],
-                                                                                   ec_textures['ec_t_masks_1'])
-            # print('t22', ec_textures['ec_t_2'].shape)#[2,128,64,64]
-            # print('t22', ec_textures['ec_t_masks_2'].shape)#[2,128,64,64]
+                                                                               ec_textures['ec_t_masks_1'])
+        # print('t22', ec_textures['ec_t_2'].shape)#[2,128,64,64]
+        # print('t22', ec_textures['ec_t_masks_2'].shape)#[2,128,64,64]
         ec_textures['ec_t_3'], ec_textures['ec_t_masks_3'] = self.ec_texture_3(ec_textures['ec_t_2'],
-                                                                                   ec_textures['ec_t_masks_2'])
-            #print('t33', ec_textures['ec_t_3'].shape)#[2,256,32,32]
-            #print('t33', ec_textures['ec_t_masks_3'].shape)#[2,256,32,32]
-        dc_texture, dc_tecture_mask = ec_textures['ec_t_3'], ec_textures['ec_t_masks_3']
-        for _ in range(4, 0, -1):
+                                                                               ec_textures['ec_t_masks_2'])
+        # print('t33', ec_textures['ec_t_3'].shape)#[2,256,32,32]
+        # print('t33', ec_textures['ec_t_masks_3'].shape)#[2,256,32,32]
+        ec_textures['ec_t_4'], ec_textures['ec_t_masks_4'] = self.ec_texture_4(ec_textures['ec_t_3'],
+                                                                               ec_textures['ec_t_masks_3'])
+        # print('t44',ec_textures['ec_t_4'].shape)#[2,512,16,16]
+        # print('t44', ec_textures['ec_t_masks_4'].shape)#[2,512,16,16]
+        ec_textures['ec_t_5'], ec_textures['ec_t_masks_5'] = self.ec_texture_5(ec_textures['ec_t_4'],
+                                                                               ec_textures['ec_t_masks_4'])
+        # print('t55', ec_textures['ec_t_5'].shape)#[2,512,8,8]
+        # print('t55', ec_textures['ec_t_masks_5'].shape)#[2,512,8,8]
+        ec_textures['ec_t_6'], ec_textures['ec_t_masks_6'] = self.ec_texture_6(ec_textures['ec_t_5'],
+                                                                               ec_textures['ec_t_masks_5'])
+        # print('t66', ec_textures['ec_t_6'].shape)#[2,512,4,4]
+        # print('t66', ec_textures['ec_t_masks_6'].shape)#[2,512,4,4]
+        ec_textures['ec_t_7'], ec_textures['ec_t_masks_7'] = self.ec_texture_7(ec_textures['ec_t_6'],
+                                                                               ec_textures['ec_t_masks_6'])
+        # print('t7', ec_textures['ec_t_7'].shape)#[2,512,2,2]
+        # print('t7m', ec_textures['ec_t_masks_7'].shape)#[2,512,2,2]
+        dc_texture, dc_tecture_mask = ec_textures['ec_t_7'], ec_textures['ec_t_masks_7']
+
+        for _ in range(7, 0, -1):
+
             ec_texture_skip = 'ec_t_{:d}'.format(_ - 1)  # ec_t_6
             ec_texture_masks_skip = 'ec_t_masks_{:d}'.format(_ - 1)  # ec_t_masks_6
             dc_conv = 'dc_texture_{:d}'.format(_)  # dc_texture_7
