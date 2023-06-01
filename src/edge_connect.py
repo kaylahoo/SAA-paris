@@ -105,8 +105,8 @@ class EdgeConnect():
             for items in train_loader:
                 #self.edge_model.train()
 
-                #self.inpaint_model1.train()
-                self.inpaint_model.train()
+                self.inpaint_model1.train()
+                #self.inpaint_model.train()
                 images, images_gray, edges, masks = self.cuda(*items)
                 #images,masks = self.cuda(*items)
 
@@ -404,8 +404,8 @@ class EdgeConnect():
             return
 
         #self.edge_model.eval()
-        self.inpaint_model.eval()
-        #self.inpaint_model1.eval()
+        #self.inpaint_model.eval()
+        self.inpaint_model1.eval()
 
         model = self.config.MODEL
         items = next(self.sample_iterator)
