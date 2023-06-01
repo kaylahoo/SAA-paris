@@ -413,7 +413,7 @@ class InpaintGenerator1(BaseNetwork):
                                                                                    ec_textures['ec_t_masks_2'])
             #print('t33', ec_textures['ec_t_3'].shape)#[2,256,32,32]
             #print('t33', ec_textures['ec_t_masks_3'].shape)#[2,256,32,32]
-        dc_texture, dc_tecture_mask = ec_textures['ec_s_3'], ec_textures['ec_s_masks_3']
+        dc_texture, dc_tecture_mask = ec_textures['ec_t_3'], ec_textures['ec_t_masks_3']
         for _ in range(4, 0, -1):
             ec_texture_skip = 'ec_t_{:d}'.format(_ - 1)  # ec_t_6
             ec_texture_masks_skip = 'ec_t_masks_{:d}'.format(_ - 1)  # ec_t_masks_6
