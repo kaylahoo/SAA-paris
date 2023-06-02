@@ -150,8 +150,8 @@ class EdgeConnect():
 
                      # train
                      outputs, gen_loss, dis_loss, logs = self.inpaint_model1.process(images, masks)
-                     # outputs_merged = (outputs * masks) + (images * (1 - masks))
-                     outputs_merged = (outputs * (1 - masks)) + (images * masks)
+                     outputs_merged = (outputs * masks) + (images * (1 - masks))
+                     #outputs_merged = (outputs * (1 - masks)) + (images * masks)
 
                      # metrics
                      psnr = self.psnr(self.postprocess(images), self.postprocess(outputs_merged))
@@ -289,8 +289,8 @@ class EdgeConnect():
             elif model == 3:
                 # eval
                 outputs, gen_loss, dis_loss, logs = self.inpaint_model1.process(images, edges, masks)
-                #outputs_merged = (outputs * masks) + (images * (1 - masks))
-                outputs_merged = (outputs * (1 - masks)) + (images * masks)
+                outputs_merged = (outputs * masks) + (images * (1 - masks))
+                #outputs_merged = (outputs * (1 - masks)) + (images * masks)
 
                 # metrics
                 psnr = self.psnr(self.postprocess(images), self.postprocess(outputs_merged))
@@ -369,9 +369,9 @@ class EdgeConnect():
 
             elif model == 3:
                 outputs = self.inpaint_model1(images, masks)
-                #outputs_merged = (outputs * masks) + (images * (1 - masks))
+                outputs_merged = (outputs * masks) + (images * (1 - masks))
                 #outputs_merged = outputs
-                outputs_merged = (outputs * (1 - masks)) + (images * masks)
+                #outputs_merged = (outputs * (1 - masks)) + (images * masks)
 
 
 
@@ -432,8 +432,8 @@ class EdgeConnect():
             #inputs = (images * (1 - masks)) + masks
             inputs = (images * (1 - masks)) + masks
             outputs = self.inpaint_model1(images, masks)
-            #outputs_merged = (outputs * masks) + (images * (1 - masks))
-            outputs_merged = (outputs * (1 - masks)) + (images * masks)
+            outputs_merged = (outputs * masks) + (images * (1 - masks))
+            #outputs_merged = (outputs * (1 - masks)) + (images * masks)
 
 
         # inpaint with edge model / joint model
