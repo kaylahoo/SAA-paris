@@ -223,7 +223,7 @@ class InpaintGenerator(BaseNetwork):
     #     return x
 
 
-class InpaintGenerator1(BaseNetwork):
+# class InpaintGenerator1(BaseNetwork):
     # def __init__(self, residual_blocks=8, use_spectral_norm=True,init_weights=True):
     #     super(InpaintGenerator1, self).__init__()
     #
@@ -283,46 +283,46 @@ class InpaintGenerator1(BaseNetwork):
     #         nn.ReflectionPad2d(3),
     #         nn.Conv2d(in_channels=64, out_channels=3, kernel_size=7, padding=0)
     #     )
-    def __init__(self, image_in_channels=4, out_channels=4, init_weights=True):
-        super(InpaintGenerator1, self).__init__()
-
-        self.freeze_ec_bn = False
-        # self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-
-        # -----------------------
-        # small encoder-decoder
-        # -----------------------
-        self.ec_texture_1 = PConvBNActiv(image_in_channels, 64, bn=False, sample='down-7')
-        self.ec_texture_2 = PConvBNActiv(64, 128, sample='down-5', )
-        self.ec_texture_3 = PConvBNActiv(128, 256, sample='down-5')
-        self.ec_texture_4 = PConvBNActiv(256, 512, sample='down-3')
-        self.ec_texture_5 = PConvBNActiv(512, 512, sample='down-3')
-        self.ec_texture_6 = PConvBNActiv(512, 512, sample='down-3')
-        self.ec_texture_7 = PConvBNActiv(512, 512, sample='down-3')
-
-        self.dc_texture_7 = PConvBNActiv(512 + 512, 512, activ='leaky')
-        self.dc_texture_6 = PConvBNActiv(512 + 512, 512, activ='leaky')
-        self.dc_texture_5 = PConvBNActiv(512 + 512, 512, activ='leaky')
-        self.dc_texture_4 = PConvBNActiv(512 + 256, 256, activ='leaky')
-        self.dc_texture_3 = PConvBNActiv(256 + 128, 128, activ='leaky')
-        self.dc_texture_2 = PConvBNActiv(128 + 64, 64, activ='leaky')
-        self.dc_texture_1 = PConvBNActiv(64 + out_channels, 64, activ='leaky')
-
-        self.fusion_layer1 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(negative_slope=0.2)
-        )
-        self.fusion_layer2 = nn.Sequential(
-            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(negative_slope=0.2),
-        )
-        self.out_layer = nn.Sequential(
-            nn.Conv2d(64, 3, kernel_size=1),
-            nn.Tanh()
-        )
-
-        if init_weights:
-            self.init_weights()
+    # def __init__(self, image_in_channels=4, out_channels=4, init_weights=True):
+    #     super(InpaintGenerator1, self).__init__()
+    #
+    #     self.freeze_ec_bn = False
+    #     # self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+    #
+    #     # -----------------------
+    #     # small encoder-decoder
+    #     # -----------------------
+    #     self.ec_texture_1 = PConvBNActiv(image_in_channels, 64, bn=False, sample='down-7')
+    #     self.ec_texture_2 = PConvBNActiv(64, 128, sample='down-5', )
+    #     self.ec_texture_3 = PConvBNActiv(128, 256, sample='down-5')
+    #     self.ec_texture_4 = PConvBNActiv(256, 512, sample='down-3')
+    #     self.ec_texture_5 = PConvBNActiv(512, 512, sample='down-3')
+    #     self.ec_texture_6 = PConvBNActiv(512, 512, sample='down-3')
+    #     self.ec_texture_7 = PConvBNActiv(512, 512, sample='down-3')
+    #
+    #     self.dc_texture_7 = PConvBNActiv(512 + 512, 512, activ='leaky')
+    #     self.dc_texture_6 = PConvBNActiv(512 + 512, 512, activ='leaky')
+    #     self.dc_texture_5 = PConvBNActiv(512 + 512, 512, activ='leaky')
+    #     self.dc_texture_4 = PConvBNActiv(512 + 256, 256, activ='leaky')
+    #     self.dc_texture_3 = PConvBNActiv(256 + 128, 128, activ='leaky')
+    #     self.dc_texture_2 = PConvBNActiv(128 + 64, 64, activ='leaky')
+    #     self.dc_texture_1 = PConvBNActiv(64 + out_channels, 64, activ='leaky')
+    #
+    #     self.fusion_layer1 = nn.Sequential(
+    #         nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+    #         nn.LeakyReLU(negative_slope=0.2)
+    #     )
+    #     self.fusion_layer2 = nn.Sequential(
+    #         nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1),
+    #         nn.LeakyReLU(negative_slope=0.2),
+    #     )
+    #     self.out_layer = nn.Sequential(
+    #         nn.Conv2d(64, 3, kernel_size=1),
+    #         nn.Tanh()
+    #     )
+    #
+    #     if init_weights:
+    #         self.init_weights()
 
         # path ="/home/lab265/8T/liulu/SAA-paris/checkpoints/psv/InpaintingModel_gen.pth"
         # #"/home/lab265/lab265/lab508_8T/liulu/SAA/checkpoints/ffhq/InpaintingModel_gen.pth"
@@ -333,7 +333,7 @@ class InpaintGenerator1(BaseNetwork):
 
 
 
-    def forward(self, images_masked,masks):
+    #def forward(self, images_masked,masks):
         # x = images_masked
         # x = self.encoder(x)
         # x = self.middle1(x)
@@ -397,71 +397,71 @@ class InpaintGenerator1(BaseNetwork):
     #     x = (torch.tanh(x) + 1) / 2
     #
     #     return x
-
-        ec_textures = {}
-        ec_structures = {}
-        input_image = images_masked
-
-        input_texture_mask = torch.cat((masks, masks, masks, masks), dim=1)
-        # print('116',input_texture_mask.shape)#[8,4,256,256]
-
-        ec_textures['ec_t_0'], ec_textures['ec_t_masks_0'] = input_image, input_texture_mask
-        # print('t00', ec_textures['ec_t_0'].shape)  # [2,4,256,256]
-        # print('t00', ec_textures['ec_t_masks_0'].shape)  # [2,4,256,256]
-        ec_textures['ec_t_1'], ec_textures['ec_t_masks_1'] = self.ec_texture_1(ec_textures['ec_t_0'],
-                                                                               ec_textures['ec_t_masks_0'])
-        # print('t11', ec_textures['ec_t_1'].shape)#[2,64,128,128]
-        # print('t11', ec_textures['ec_t_masks_1'].shape)#[2,64,128,128]
-        ec_textures['ec_t_2'], ec_textures['ec_t_masks_2'] = self.ec_texture_2(ec_textures['ec_t_1'],
-                                                                               ec_textures['ec_t_masks_1'])
-        # print('t22', ec_textures['ec_t_2'].shape)#[2,128,64,64]
-        # print('t22', ec_textures['ec_t_masks_2'].shape)#[2,128,64,64]
-        ec_textures['ec_t_3'], ec_textures['ec_t_masks_3'] = self.ec_texture_3(ec_textures['ec_t_2'],
-                                                                               ec_textures['ec_t_masks_2'])
-        # print('t33', ec_textures['ec_t_3'].shape)#[2,256,32,32]
-        # print('t33', ec_textures['ec_t_masks_3'].shape)#[2,256,32,32]
-        ec_textures['ec_t_4'], ec_textures['ec_t_masks_4'] = self.ec_texture_4(ec_textures['ec_t_3'],
-                                                                               ec_textures['ec_t_masks_3'])
-        # print('t44',ec_textures['ec_t_4'].shape)#[2,512,16,16]
-        # print('t44', ec_textures['ec_t_masks_4'].shape)#[2,512,16,16]
-        ec_textures['ec_t_5'], ec_textures['ec_t_masks_5'] = self.ec_texture_5(ec_textures['ec_t_4'],
-                                                                               ec_textures['ec_t_masks_4'])
-        # print('t55', ec_textures['ec_t_5'].shape)#[2,512,8,8]
-        # print('t55', ec_textures['ec_t_masks_5'].shape)#[2,512,8,8]
-        ec_textures['ec_t_6'], ec_textures['ec_t_masks_6'] = self.ec_texture_6(ec_textures['ec_t_5'],
-                                                                               ec_textures['ec_t_masks_5'])
-        # print('t66', ec_textures['ec_t_6'].shape)#[2,512,4,4]
-        # print('t66', ec_textures['ec_t_masks_6'].shape)#[2,512,4,4]
-        ec_textures['ec_t_7'], ec_textures['ec_t_masks_7'] = self.ec_texture_7(ec_textures['ec_t_6'],
-                                                                               ec_textures['ec_t_masks_6'])
-        # print('t7', ec_textures['ec_t_7'].shape)#[2,512,2,2]
-        # print('t7m', ec_textures['ec_t_masks_7'].shape)#[2,512,2,2]
-        dc_texture, dc_tecture_mask = ec_textures['ec_t_7'], ec_textures['ec_t_masks_7']
-
-        for _ in range(7, 0, -1):
-
-            ec_texture_skip = 'ec_t_{:d}'.format(_ - 1)  # ec_t_6
-            ec_texture_masks_skip = 'ec_t_masks_{:d}'.format(_ - 1)  # ec_t_masks_6
-            dc_conv = 'dc_texture_{:d}'.format(_)  # dc_texture_7
-
-            dc_texture = F.interpolate(dc_texture, scale_factor=2, mode='bilinear')  # dc_texture 4x4
-            dc_tecture_mask = F.interpolate(dc_tecture_mask, scale_factor=2, mode='nearest')  # dc_tecture_mask 4x4
-
-
-            #print(ec_textures[ec_texture_skip].shape)
-            dc_texture = torch.cat((dc_texture, ec_textures[ec_texture_skip]), dim=1)  # dc_texture 4x4 ec_textures['ec_t_6'] 4x4
-           # print('186',dc_texture.shape)
-            dc_tecture_mask = torch.cat((dc_tecture_mask, ec_textures[ec_texture_masks_skip]),
-                                        dim=1)  # dc_tecture_mask 4x4 ec_textures['ec_t_masks_6'] 4x4
-
-            dc_texture, dc_tecture_mask = getattr(self, dc_conv)(dc_texture,dc_tecture_mask)
-
-        output1 = dc_texture
-        output2 = self.fusion_layer1(output1)
-        output3 = self.fusion_layer2(output2)
-        output4 = self.out_layer(output3)
-
-        return output4
+#这是paper1 单分支消融部分
+#       # ec_textures = {}
+        # ec_structures = {}
+        # input_image = images_masked
+        #
+        # input_texture_mask = torch.cat((masks, masks, masks, masks), dim=1)1
+        # # print('116',input_texture_mask.shape)#[8,4,256,256]
+        #
+        # ec_textures['ec_t_0'], ec_textures['ec_t_masks_0'] = input_image, input_texture_mask
+        # # print('t00', ec_textures['ec_t_0'].shape)  # [2,4,256,256]
+        # # print('t00', ec_textures['ec_t_masks_0'].shape)  # [2,4,256,256]
+        # ec_textures['ec_t_1'], ec_textures['ec_t_masks_1'] = self.ec_texture_1(ec_textures['ec_t_0'],
+        #                                                                        ec_textures['ec_t_masks_0'])
+        # # print('t11', ec_textures['ec_t_1'].shape)#[2,64,128,128]
+        # # print('t11', ec_textures['ec_t_masks_1'].shape)#[2,64,128,128]
+        # ec_textures['ec_t_2'], ec_textures['ec_t_masks_2'] = self.ec_texture_2(ec_textures['ec_t_1'],
+        #                                                                        ec_textures['ec_t_masks_1'])
+        # # print('t22', ec_textures['ec_t_2'].shape)#[2,128,64,64]
+        # # print('t22', ec_textures['ec_t_masks_2'].shape)#[2,128,64,64]
+        # ec_textures['ec_t_3'], ec_textures['ec_t_masks_3'] = self.ec_texture_3(ec_textures['ec_t_2'],
+        #                                                                        ec_textures['ec_t_masks_2'])
+        # # print('t33', ec_textures['ec_t_3'].shape)#[2,256,32,32]
+        # # print('t33', ec_textures['ec_t_masks_3'].shape)#[2,256,32,32]
+        # ec_textures['ec_t_4'], ec_textures['ec_t_masks_4'] = self.ec_texture_4(ec_textures['ec_t_3'],
+        #                                                                        ec_textures['ec_t_masks_3'])
+        # # print('t44',ec_textures['ec_t_4'].shape)#[2,512,16,16]
+        # # print('t44', ec_textures['ec_t_masks_4'].shape)#[2,512,16,16]
+        # ec_textures['ec_t_5'], ec_textures['ec_t_masks_5'] = self.ec_texture_5(ec_textures['ec_t_4'],
+        #                                                                        ec_textures['ec_t_masks_4'])
+        # # print('t55', ec_textures['ec_t_5'].shape)#[2,512,8,8]
+        # # print('t55', ec_textures['ec_t_masks_5'].shape)#[2,512,8,8]
+        # ec_textures['ec_t_6'], ec_textures['ec_t_masks_6'] = self.ec_texture_6(ec_textures['ec_t_5'],
+        #                                                                        ec_textures['ec_t_masks_5'])
+        # # print('t66', ec_textures['ec_t_6'].shape)#[2,512,4,4]
+        # # print('t66', ec_textures['ec_t_masks_6'].shape)#[2,512,4,4]
+        # ec_textures['ec_t_7'], ec_textures['ec_t_masks_7'] = self.ec_texture_7(ec_textures['ec_t_6'],
+        #                                                                        ec_textures['ec_t_masks_6'])
+        # # print('t7', ec_textures['ec_t_7'].shape)#[2,512,2,2]
+        # # print('t7m', ec_textures['ec_t_masks_7'].shape)#[2,512,2,2]
+        # dc_texture, dc_tecture_mask = ec_textures['ec_t_7'], ec_textures['ec_t_masks_7']
+        #
+        # for _ in range(7, 0, -1):
+        #
+        #     ec_texture_skip = 'ec_t_{:d}'.format(_ - 1)  # ec_t_6
+        #     ec_texture_masks_skip = 'ec_t_masks_{:d}'.format(_ - 1)  # ec_t_masks_6
+        #     dc_conv = 'dc_texture_{:d}'.format(_)  # dc_texture_7
+        #
+        #     dc_texture = F.interpolate(dc_texture, scale_factor=2, mode='bilinear')  # dc_texture 4x4
+        #     dc_tecture_mask = F.interpolate(dc_tecture_mask, scale_factor=2, mode='nearest')  # dc_tecture_mask 4x4
+        #
+        #
+        #     #print(ec_textures[ec_texture_skip].shape)
+        #     dc_texture = torch.cat((dc_texture, ec_textures[ec_texture_skip]), dim=1)  # dc_texture 4x4 ec_textures['ec_t_6'] 4x4
+        #    # print('186',dc_texture.shape)
+        #     dc_tecture_mask = torch.cat((dc_tecture_mask, ec_textures[ec_texture_masks_skip]),
+        #                                 dim=1)  # dc_tecture_mask 4x4 ec_textures['ec_t_masks_6'] 4x4
+        #
+        #     dc_texture, dc_tecture_mask = getattr(self, dc_conv)(dc_texture,dc_tecture_mask)
+        #
+        # output1 = dc_texture
+        # output2 = self.fusion_layer1(output1)
+        # output3 = self.fusion_layer2(output2)
+        # output4 = self.out_layer(output3)
+        #
+        # return output4
 
 
 class EdgeGenerator(BaseNetwork):
